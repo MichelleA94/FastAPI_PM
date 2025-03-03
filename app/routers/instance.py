@@ -13,7 +13,7 @@ router = APIRouter(
 
 @router.get("/", response_model=List[schemas.InstanceResponse])
 def get_instances(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user), limit: int = 100, skip: int = 0):
-    if "admin" in current_user.username:
+    if "admin" in current_user.role:
         instances = db.query(models.Instance).limit(limit).offset(skip).all()
     else:
         raise HTTPException(status_code= status.HTTP_403_FORBIDDEN, detail= "Not authorized to perform requested action")
@@ -25,14 +25,14 @@ def get_instance(id: int, db: Session = Depends(get_db), current_user: int = Dep
     if not instance:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND,
                            detail = f"instance with id: {id} was not found")
-    if "admin" not in current_user.username:
+    if "admin" not in current_user.role:
         raise HTTPException(status_code= status.HTTP_403_FORBIDDEN, detail= "Not authorized to perform requested action")
     return instance
 
 @router.post("/", status_code = status.HTTP_201_CREATED, response_model=schemas.InstanceResponse)
 def create_instances(payload: schemas.InstanceCreate, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     new_instance = models.Instance(**payload.dict())
-    if "admin" not in current_user.username:
+    if "admin" not in current_user.role:
         raise HTTPException(status_code= status.HTTP_403_FORBIDDEN, detail= "Not authorized to perform requested action")
     db.add(new_instance)
     db.commit()
@@ -45,7 +45,7 @@ def update_instance(id: int, payload: schemas.InstanceCreate, db: Session = Depe
     instance = instance_query.first()
     if instance == None:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = f"instance with id: {id} was not found") # put you have to write all the fields / patch you only need to write the changed variable
-    if "admin" not in current_user.username:
+    if "admin" not in current_user.role:
         raise HTTPException(status_code= status.HTTP_403_FORBIDDEN, detail= "Not authorized to perform requested action")
     instance_query.update(payload.dict())
     db.commit()
@@ -57,7 +57,7 @@ def delete_instance(id: int, db: Session = Depends(get_db), current_user: int = 
     instance = instance_query.first()
     if instance == None:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = f"instance with id: {id} was not found")
-    if "admin" not in current_user.username:
+    if "admin" not in current_user.role:
         raise HTTPException(status_code= status.HTTP_403_FORBIDDEN, detail= "Not authorized to perform requested action")
     instance_query.delete(synchronize_session=False)
     db.commit()

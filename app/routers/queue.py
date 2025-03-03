@@ -13,7 +13,7 @@ router = APIRouter(
 
 @router.get("/", response_model=List[schemas.QueueResponse])
 def get_queues(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user), limit: int = 100, skip: int = 0):
-    if "admin" in current_user.username:
+    if "admin" in current_user.role:
         queues = db.query(models.Queue).limit(limit).offset(skip).all()
     else:
         raise HTTPException(status_code= status.HTTP_403_FORBIDDEN, detail= "Not authorized to perform requested action")
@@ -25,14 +25,14 @@ def get_queue(id: int, db: Session = Depends(get_db), current_user: int = Depend
     if not queue:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND,
                            detail = f"queue with id: {id} was not found")
-    if "admin" not in current_user.username:
+    if "admin" not in current_user.role:
         raise HTTPException(status_code= status.HTTP_403_FORBIDDEN, detail= "Not authorized to perform requested action")
     return queue
 
 @router.post("/", status_code = status.HTTP_201_CREATED, response_model=schemas.QueueResponse)
 def create_queues(payload: schemas.QueueCreate, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     new_queue = models.Queue(**payload.dict())
-    if "admin" not in current_user.username:
+    if "admin" not in current_user.role:
         raise HTTPException(status_code= status.HTTP_403_FORBIDDEN, detail= "Not authorized to perform requested action")
     db.add(new_queue)
     db.commit()
@@ -45,7 +45,7 @@ def update_queue(id: int, payload: schemas.QueueCreate, db: Session = Depends(ge
     queue = queue_query.first()
     if queue == None:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = f"queue with id: {id} was not found") # put you have to write all the fields / patch you only need to write the changed variable
-    if "admin" not in current_user.username:
+    if "admin" not in current_user.role:
         raise HTTPException(status_code= status.HTTP_403_FORBIDDEN, detail= "Not authorized to perform requested action")
     queue_query.update(payload.dict())
     db.commit()
@@ -57,7 +57,7 @@ def delete_queue(id: int, db: Session = Depends(get_db), current_user: int = Dep
     queue = queue_query.first()
     if queue == None:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = f"queue with id: {id} was not found")
-    if "admin" not in current_user.username:
+    if "admin" not in current_user.role:
         raise HTTPException(status_code= status.HTTP_403_FORBIDDEN, detail= "Not authorized to perform requested action")
     queue_query.delete(synchronize_session=False)
     db.commit()

@@ -35,6 +35,7 @@ class User(Base):
     created_at =  Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
     username = Column(String, nullable=False, unique = True)
     password = Column(String, nullable=False)
+    role = Column(String, nullable=False)
 
 class Platform(Base):
     __tablename__ = "platforms"
@@ -68,7 +69,7 @@ class Queue(Base):
     queue_id = Column(String, nullable=False)
     queue_name = Column(String, nullable=False)
 
-class Sript(Base):
+class Script(Base):
     __tablename__ = "scripts"
 
     id = Column(Integer, primary_key=True, nullable=False)

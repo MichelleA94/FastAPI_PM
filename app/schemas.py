@@ -5,11 +5,13 @@ from typing import Optional
 class UserCreate(BaseModel):
     username: str
     password: str
+    role: str
 
 class UserResponse(BaseModel):
     id: int
     created_at: datetime
     username: str
+    role: str
 
     class Config:
         orm_mode = True

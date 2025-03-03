@@ -13,7 +13,7 @@ router = APIRouter(
 
 @router.get("/", response_model=List[schemas.ModalityResponse])
 def get_modalities(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user), limit: int = 100, skip: int = 0):
-    if "admin" in current_user.username:
+    if "admin" in current_user.role:
         modalities = db.query(models.Modality).limit(limit).offset(skip).all()
     else:
         raise HTTPException(status_code= status.HTTP_403_FORBIDDEN, detail= "Not authorized to perform requested action")
@@ -25,14 +25,14 @@ def get_modality(id: int, db: Session = Depends(get_db), current_user: int = Dep
     if not modality:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND,
                            detail = f"modality with id: {id} was not found")
-    if "admin" not in current_user.username:
+    if "admin" not in current_user.role:
         raise HTTPException(status_code= status.HTTP_403_FORBIDDEN, detail= "Not authorized to perform requested action")
     return modality
 
 @router.post("/", status_code = status.HTTP_201_CREATED, response_model=schemas.ModalityResponse)
 def create_modalities(payload: schemas.ModalitytCreate, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     new_modality = models.Modality(**payload.dict())
-    if "admin" not in current_user.username:
+    if "admin" not in current_user.role:
         raise HTTPException(status_code= status.HTTP_403_FORBIDDEN, detail= "Not authorized to perform requested action")
     db.add(new_modality)
     db.commit()
@@ -45,7 +45,7 @@ def update_modality(id: int, payload: schemas.ModalitytCreate, db: Session = Dep
     modality = modality_query.first()
     if modality == None:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = f"modality with id: {id} was not found") # put you have to write all the fields / patch you only need to write the changed variable
-    if "admin" not in current_user.username:
+    if "admin" not in current_user.role:
         raise HTTPException(status_code= status.HTTP_403_FORBIDDEN, detail= "Not authorized to perform requested action")
     modality_query.update(payload.dict())
     db.commit()
@@ -57,7 +57,7 @@ def delete_modality(id: int, db: Session = Depends(get_db), current_user: int = 
     modality = modality_query.first()
     if modality == None:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = f"modality with id: {id} was not found")
-    if "admin" not in current_user.username:
+    if "admin" not in current_user.role:
         raise HTTPException(status_code= status.HTTP_403_FORBIDDEN, detail= "Not authorized to perform requested action")
     modality_query.delete(synchronize_session=False)
     db.commit()

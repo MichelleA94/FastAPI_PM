@@ -13,7 +13,7 @@ router = APIRouter(
 
 @router.get("/", response_model=List[schemas.PlatformResponse])
 def get_platforms(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user), limit: int = 100, skip: int = 0):
-    if "admin" in current_user.username:
+    if "admin" in current_user.role:
         platforms = db.query(models.Platform).limit(limit).offset(skip).all()
     else:
         raise HTTPException(status_code= status.HTTP_403_FORBIDDEN, detail= "Not authorized to perform requested action")
@@ -25,14 +25,14 @@ def get_platform(id: int, db: Session = Depends(get_db), current_user: int = Dep
     if not platform:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND,
                            detail = f"platform with id: {id} was not found")
-    if "admin" not in current_user.username:
+    if "admin" not in current_user.role:
         raise HTTPException(status_code= status.HTTP_403_FORBIDDEN, detail= "Not authorized to perform requested action")
     return platform
 
 @router.post("/", status_code = status.HTTP_201_CREATED, response_model=schemas.PlatformResponse)
 def create_platforms(payload: schemas.PlatformCreate, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     new_platform = models.Platform(**payload.dict())
-    if "admin" not in current_user.username:
+    if "admin" not in current_user.role:
         raise HTTPException(status_code= status.HTTP_403_FORBIDDEN, detail= "Not authorized to perform requested action")
     db.add(new_platform)
     db.commit()
@@ -45,7 +45,7 @@ def update_platform(id: int, payload: schemas.PlatformCreate, db: Session = Depe
     platform = platform_query.first()
     if platform == None:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = f"platform with id: {id} was not found") # put you have to write all the fields / patch you only need to write the changed variable
-    if "admin" not in current_user.username:
+    if "admin" not in current_user.role:
         raise HTTPException(status_code= status.HTTP_403_FORBIDDEN, detail= "Not authorized to perform requested action")
     platform_query.update(payload.dict())
     db.commit()
@@ -57,7 +57,7 @@ def delete_platform(id: int, db: Session = Depends(get_db), current_user: int = 
     platform = platform_query.first()
     if platform == None:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = f"platform with id: {id} was not found")
-    if "admin" not in current_user.username:
+    if "admin" not in current_user.role:
         raise HTTPException(status_code= status.HTTP_403_FORBIDDEN, detail= "Not authorized to perform requested action")
     platform_query.delete(synchronize_session=False)
     db.commit()

@@ -13,7 +13,7 @@ router = APIRouter(
 
 @router.get("/", response_model=List[schemas.EventResponse])
 def get_events(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user), limit: int = 100, skip: int = 0):
-    if "admin" in current_user.username:
+    if "admin" in current_user.role:
         events = db.query(models.Event).limit(limit).offset(skip).all()
     else:
         events = db.query(models.Event).filter(models.Event.owner_id == current_user.id).limit(limit).offset(skip).all()
@@ -27,7 +27,7 @@ def get_event(id: int, db: Session = Depends(get_db), current_user: int = Depend
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND,
                            detail = f"event with id: {id} was not found")
 
-    if "admin" not in current_user.username:
+    if "admin" not in current_user.role:
         if event.owner_id != current_user.id:
             raise HTTPException(status_code= status.HTTP_403_FORBIDDEN, detail= "Not authorized to perform requested action")
     return event
@@ -46,7 +46,7 @@ def update_event(id: int, payload: schemas.EventCreate, db: Session = Depends(ge
     event = event_query.first()
     if event == None:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = f"event with id: {id} was not found") # put you have to write all the fields / patch you only need to write the changed variable
-    if "admin" not in current_user.username:
+    if "admin" not in current_user.role:
         if event.owner_id != current_user.id:
             raise HTTPException(status_code= status.HTTP_403_FORBIDDEN, detail= "Not authorized to perform requested action")
     event_query.update(payload.dict())
@@ -59,7 +59,7 @@ def delete_event(id: int, db: Session = Depends(get_db), current_user: int = Dep
     event = event_query.first()
     if event == None:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = f"event with id: {id} was not found")
-    if "admin" not in current_user.username:
+    if "admin" not in current_user.role:
         if event.owner_id != current_user.id:
             raise HTTPException(status_code= status.HTTP_403_FORBIDDEN, detail= "Not authorized to perform requested action")
     event_query.delete(synchronize_session=False)

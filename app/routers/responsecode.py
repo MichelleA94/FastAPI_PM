@@ -13,7 +13,7 @@ router = APIRouter(
 
 @router.get("/", response_model=List[schemas.ResponseCodeResponse])
 def get_responsecodes(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user), limit: int = 100, skip: int = 0):
-    if "admin" in current_user.username:
+    if "admin" in current_user.role:
         responsecodes = db.query(models.ResponseCode).limit(limit).offset(skip).all()
     else:
         raise HTTPException(status_code= status.HTTP_403_FORBIDDEN, detail= "Not authorized to perform requested action")
@@ -25,14 +25,14 @@ def get_responsecode(id: int, db: Session = Depends(get_db), current_user: int =
     if not responsecode:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND,
                            detail = f"responsecode with id: {id} was not found")
-    if "admin" not in current_user.username:
+    if "admin" not in current_user.role:
         raise HTTPException(status_code= status.HTTP_403_FORBIDDEN, detail= "Not authorized to perform requested action")
     return responsecode
 
 @router.post("/", status_code = status.HTTP_201_CREATED, response_model=schemas.ResponseCodeResponse)
 def create_responsecodes(payload: schemas.ResponseCodeCreate, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     new_responsecode = models.ResponseCode(**payload.dict())
-    if "admin" not in current_user.username:
+    if "admin" not in current_user.role:
         raise HTTPException(status_code= status.HTTP_403_FORBIDDEN, detail= "Not authorized to perform requested action")
     db.add(new_responsecode)
     db.commit()
@@ -45,7 +45,7 @@ def update_responsecode(id: int, payload: schemas.ResponseCodeCreate, db: Sessio
     responsecode = responsecode_query.first()
     if responsecode == None:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = f"responsecode with id: {id} was not found") # put you have to write all the fields / patch you only need to write the changed variable
-    if "admin" not in current_user.username:
+    if "admin" not in current_user.role:
         raise HTTPException(status_code= status.HTTP_403_FORBIDDEN, detail= "Not authorized to perform requested action")
     responsecode_query.update(payload.dict())
     db.commit()
@@ -57,7 +57,7 @@ def delete_responsecode(id: int, db: Session = Depends(get_db), current_user: in
     responsecode = responsecode_query.first()
     if responsecode == None:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = f"responsecode with id: {id} was not found")
-    if "admin" not in current_user.username:
+    if "admin" not in current_user.role:
         raise HTTPException(status_code= status.HTTP_403_FORBIDDEN, detail= "Not authorized to perform requested action")
     responsecode_query.delete(synchronize_session=False)
     db.commit()
